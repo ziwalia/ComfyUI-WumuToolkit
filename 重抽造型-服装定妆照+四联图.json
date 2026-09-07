@@ -1,0 +1,933 @@
+{
+  "id": "wumu-reroll-outfits-v1",
+  "revision": 0,
+  "last_node_id": 7,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "pos": [
+        -2350,
+        -560
+      ],
+      "size": [
+        720,
+        620
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# 🎬 Wumu 重抽造型工作流（跳过①，只跑②+四联）\n\n适用：**基础定妆照已满意**，只想重抽服装造型 / 四联图\n\n## 链路\nLoadImage（喂旧基础照）→ ②服装造型定妆照工坊 → 四联图工坊\n\n## 使用步骤\n1. **LoadImage（左）**：点 upload 上传已保存的 `角色_基础定妆照.png`\n2. **②服装造型定妆照工坊（中）**：\n   - `角色名` 与原角色一致（文件命名用）\n   - `人物英文描述` 填身份描述（本工作流没连①的身份核心，靠它锚脸；可直接粘①当时用的完整提示词，节点自动剥离）\n   - 造型槽：要重抽的服装填这里\n3. **四联图工坊（右）**：`角色名`/`造型名` 与②对齐\n4. Queue —— 只跑②+四联，**基础照零消耗，比全流程快 1-2 分钟**\n5. 不满意 → 换②的种子再 Queue\n\n## 与全流程工作流的区别\n`人物资产全流程-定妆照+四联图.json` 从①文生图开始出全部资产；本工作流从已有基础照开始，专用于造型返工"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        -1500,
+        180
+      ],
+      "size": [
+        320,
+        440
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "upload",
+          "name": "upload",
+          "type": "IMAGE",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "上传_角色_基础定妆照.png",
+        "image"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "WumuOutfitAtelier",
+      "pos": [
+        -1120,
+        150
+      ],
+      "size": [
+        430,
+        1130
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "base_image",
+          "name": "base_image",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "localized_name": "identity",
+          "name": "identity",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "char_name",
+          "name": "char_name",
+          "type": "STRING",
+          "widget": {
+            "name": "char_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "desc_en",
+          "name": "desc_en",
+          "type": "STRING",
+          "widget": {
+            "name": "desc_en"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "style_name",
+          "name": "style_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "style_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "style_strength",
+          "name": "style_strength",
+          "type": "FLOAT",
+          "widget": {
+            "name": "style_strength"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "guidance",
+          "name": "guidance",
+          "type": "FLOAT",
+          "widget": {
+            "name": "guidance"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "use_turbo",
+          "name": "use_turbo",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_turbo"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_enable",
+          "name": "slot1_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot1_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_name",
+          "name": "slot1_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot1_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_desc",
+          "name": "slot1_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot1_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_enable",
+          "name": "slot2_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot2_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_name",
+          "name": "slot2_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot2_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_desc",
+          "name": "slot2_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot2_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_enable",
+          "name": "slot3_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot3_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_name",
+          "name": "slot3_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot3_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_desc",
+          "name": "slot3_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot3_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_enable",
+          "name": "slot4_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot4_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_name",
+          "name": "slot4_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot4_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_desc",
+          "name": "slot4_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot4_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_enable",
+          "name": "slot5_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot5_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_name",
+          "name": "slot5_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot5_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_desc",
+          "name": "slot5_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot5_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_save",
+          "name": "auto_save",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_save"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_dir",
+          "name": "save_dir",
+          "type": "STRING",
+          "widget": {
+            "name": "save_dir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "language",
+          "name": "language",
+          "type": "COMBO",
+          "widget": {
+            "name": "language"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "造型1定妆照",
+          "name": "造型1定妆照",
+          "type": "IMAGE",
+          "links": [
+            2,
+            8
+          ]
+        },
+        {
+          "localized_name": "造型2定妆照",
+          "name": "造型2定妆照",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "localized_name": "造型3定妆照",
+          "name": "造型3定妆照",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "localized_name": "造型4定妆照",
+          "name": "造型4定妆照",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        },
+        {
+          "localized_name": "造型5定妆照",
+          "name": "造型5定妆照",
+          "type": "IMAGE",
+          "links": [
+            6
+          ]
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WumuOutfitAtelier"
+      },
+      "widgets_values": [
+        "顾一苇",
+        "Realistic film-grade character reference photography. Chinese Han ethnicity woman, 22, round face, ponytail, petite, flight-attendant cap never quite straight, standing facing the camera squarely, full body visible head to toe, arms relaxed at sides with hands visible. Black ponytail with a crooked flight-cap crease, round face with soft cheeks, big watery eyes that widen when flustered, small straight nose, petal-soft lips, 22 years old with baby-fat cheeks and no wrinkles, petite 155cm slight build with nervous fidgeting hands Wearing plain simple underwear only, no clothing, no accessories, no jewelry. True skin texture with natural fine lines and visible pores, matte skin finish, no oily sheen, natural unretouched complexion. Seamless pure white studio background, nothing else in frame; soft top key light with gentle twin side fill and a subtle hair rim light, soft lighting ratio. 8K ultra-realistic, commercial portrait photography, 85mm f1.8 lens, subtle film grain, cinematic atmosphere, clean transparent image with rich detail. (avoid: over-smoothed waxy plastic skin, beauty-filter face, distorted facial features, deformed hands, twisted limbs, cartoon, anime, oil painting, illustration)",
+        "写实电影",
+        0.8,
+        "flux2_dev_fp8mixed.safetensors",
+        "mistral_3_small_flux2_bf16.safetensors",
+        "full_encoder_small_decoder.safetensors",
+        8,
+        4,
+        832,
+        1216,
+        3291267020,
+        "randomize",
+        true,
+        true,
+        "常服",
+        "Edit the reference photo: the SAME person with identical face, hairstyle, body shape and skin tone, now wearing a slim-fitting futuristic in-starship attendant uniform in the same suit design system, light-duty class tailored for her petite 155cm frame with soft rounded contours, NOT bulky and not military-looking: pearl-white smooth segmented armor panels over the torso and shoulders with pale blue-grey flexible fabric between segments, panels thinner and lighter than heavy-duty crew suits; glowing cyan piping tracing the collar, cuffs and armor seams with a subtle breathing pulse; a compact attendant service module on the chest (cabin comms and passenger info screen, no heavy buttons) with one small red indicator; no heavy backpack — only a pair of slim curved hip storage wings; an enlarged silver-white communication ear pod on her right ear (her signature gear, indicator gently blinking); a slim white metal neck ring; a fully transparent clear dome helmet with her round-faced features fully visible, thin white helmet frame, one small top lamp. Standing facing the camera, full body visible head to toe, arms relaxed at sides, her fingers naturally intertwined in a nervous habit. True skin texture with baby-fat cheeks, matte finish, no oily sheen. Seamless pure white studio background; soft top key light with gentle twin side fill and soft fill inside the transparent helmet. 8K ultra-realistic, commercial portrait photography, 85mm f1.8 lens, subtle film grain, cinematic atmosphere. (avoid: bulky silhouette, heavy military armor, over-smoothed waxy skin, exaggerated youthfulness, distorted facial features, deformed hands, twisted limbs, cartoon, anime, oil painting)",
+        false,
+        "造型2",
+        "",
+        false,
+        "造型3",
+        "",
+        false,
+        "造型4",
+        "",
+        false,
+        "造型5",
+        "",
+        true,
+        "F:\\AI\\MINIMAXH3",
+        "中文"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "MarkdownNote",
+      "pos": [
+        -1120,
+        -560
+      ],
+      "size": [
+        640,
+        620
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# 📖 ②服装造型定妆照工坊 参数手册（重抽场景）\n\n**base_image（必连，已接 LoadImage）** 喂基础定妆照（白底内衣全身照最佳）\n\n**人物英文描述** 本工作流没连①的「身份核心」，**必须填**：\n只写身份特征（国籍人种→年龄体型→脸型发型→肤色→特殊标记）；\n也可直接粘①当时用的完整提示词（含 underwear 模板），节点自动剥离只留身份核心\n\n**角色/风格/模型/尺寸** 与原全流程保持一致（同风格保证新造型与旧基础照相符）\n\n**种子** 每次重抽不满意就换；造型N 用 seed+N×10\n\n**造型槽×5** 要重抽的服装：启用 + 中文名 + Kontext 服装提示词：\n`Edit the reference photo: the SAME person with identical face, hairstyle, body shape and skin tone, now wearing [服装描述]. Standing facing the camera, full body visible head to toe, arms relaxed at sides with hands visible, seamless pure white studio background, nothing else in frame, soft even frontal studio lighting, photorealistic, sharp focus. no text, no watermark, no logo.`"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 5,
+      "type": "WumuTriptychAtelier",
+      "pos": [
+        -620,
+        220
+      ],
+      "size": [
+        420,
+        850
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "slot1_image",
+          "name": "slot1_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "localized_name": "slot2_image",
+          "name": "slot2_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "localized_name": "slot3_image",
+          "name": "slot3_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "localized_name": "slot4_image",
+          "name": "slot4_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "localized_name": "slot5_image",
+          "name": "slot5_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 6
+        },
+        {
+          "localized_name": "char_name",
+          "name": "char_name",
+          "type": "STRING",
+          "widget": {
+            "name": "char_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "canvas_w",
+          "name": "canvas_w",
+          "type": "INT",
+          "widget": {
+            "name": "canvas_w"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "canvas_h",
+          "name": "canvas_h",
+          "type": "INT",
+          "widget": {
+            "name": "canvas_h"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "front_h",
+          "name": "front_h",
+          "type": "INT",
+          "widget": {
+            "name": "front_h"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "side_h",
+          "name": "side_h",
+          "type": "INT",
+          "widget": {
+            "name": "side_h"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_name",
+          "name": "slot1_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot1_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_name",
+          "name": "slot2_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot2_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_name",
+          "name": "slot3_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot3_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_name",
+          "name": "slot4_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot4_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_name",
+          "name": "slot5_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot5_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_save",
+          "name": "auto_save",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_save"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_views",
+          "name": "save_views",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save_views"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_dir",
+          "name": "save_dir",
+          "type": "STRING",
+          "widget": {
+            "name": "save_dir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "language",
+          "name": "language",
+          "type": "COMBO",
+          "widget": {
+            "name": "language"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "四联图1",
+          "name": "四联图1",
+          "type": "IMAGE",
+          "links": [
+            9
+          ]
+        },
+        {
+          "localized_name": "四联图2",
+          "name": "四联图2",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "四联图3",
+          "name": "四联图3",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "四联图4",
+          "name": "四联图4",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "四联图5",
+          "name": "四联图5",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WumuTriptychAtelier"
+      },
+      "widgets_values": [
+        "顾一苇",
+        "flux-2-klein-9b-kv-fp8.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
+        "full_encoder_small_decoder.safetensors",
+        4,
+        3009485762,
+        "randomize",
+        1920,
+        1080,
+        960,
+        1000,
+        "常服",
+        "造型2",
+        "造型3",
+        "造型4",
+        "造型5",
+        true,
+        true,
+        "F:\\AI\\MINIMAXH3",
+        "中文"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "PreviewImage",
+      "pos": [
+        -120,
+        0
+      ],
+      "size": [
+        900,
+        660
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 7,
+      "type": "PreviewImage",
+      "pos": [
+        -120,
+        720
+      ],
+      "size": [
+        1300,
+        620
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      3,
+      1,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      4,
+      3,
+      2,
+      5,
+      2,
+      "IMAGE"
+    ],
+    [
+      5,
+      3,
+      3,
+      5,
+      3,
+      "IMAGE"
+    ],
+    [
+      6,
+      3,
+      4,
+      5,
+      4,
+      "IMAGE"
+    ],
+    [
+      8,
+      3,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      5,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8,
+      "offset": [
+        800,
+        300
+      ]
+    }
+  },
+  "version": 0.4
+}
