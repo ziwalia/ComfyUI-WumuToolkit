@@ -219,6 +219,7 @@ body shape and skin tone, now wearing [服装总类与设计系统，1-2 句].
 
 ## 📋 版本历史
 
+- **v1.3.1**：修复图生图崩溃——新版 ComfyUI（0.33.x）`VAE.encode` 直接返回裸 tensor，旧代码 `vae.encode(x)["samples"]` 下标报 IndexError；新增 `_vae_encode_samples` 兼容层（新旧版 ComfyUI 均可），①基础定妆照工坊与旧版合并节点两处同步修复
 - **v1.3.0**：定妆照工坊拆分为 **①基础定妆照工坊（WumuBaseAtelier）** + **②服装造型定妆照工坊（WumuOutfitAtelier）**——①输出「基础定妆照 + 身份核心」，②必连 `base_image`、选连 `identity`（免重复填人物描述）；重抽造型=换线不重跑①；②种子独立；公共逻辑抽 Mixin；旧合并节点保留注册兼容旧工作流
 - **v1.2.1**：控件行标题双语（中文模式「中文名 + 键名」，English 模式英文名，切换即时生效）；节点标题栏显示版本号（读自 `pyproject.toml`，`/wumu/lang` 返回 `version`）
 - **v1.2.0**：新增 `language` 中英文下拉（默认中文）——节点输出（落盘目录/文件后缀/四视角提示词/info/日志）按节点独立切换；参数提示双语化（`wumu_lang` 模块 + `/wumu/lang` API，切换后刷新页面生效）；合并 v1.1.0 的基础照图生图与外部基础照重抽造型

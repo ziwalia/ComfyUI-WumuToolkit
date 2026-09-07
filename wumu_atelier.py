@@ -194,6 +194,12 @@ class _WumuFlux2Mixin:
             core = core[:idx].strip().rstrip(",")
         return core.strip()
 
+    @staticmethod
+    def _vae_encode_samples(vae, img_tensor):
+        """VAE 编码为裸 latent tensor；兼容新旧 ComfyUI（新版 encode 直接返回 tensor，旧版返回 {'samples': ...}）"""
+        lat = vae.encode(img_tensor)
+        return lat["samples"] if isinstance(lat, dict) else lat
+
     def _zh(self, language):
         return language == "中文"
 
@@ -320,7 +326,7 @@ class WumuBaseAtelier(_WumuFlux2Mixin):
                                        "[Wumu Base] ❌ base_use_reference is on — connect the base_reference_image input"))
             # 参考图先统一到出图尺寸，保证 latent 形状与调度表一致
             ref_pil = tensor_to_pil(base_reference_image).resize((width, height), Image.LANCZOS)
-            init_latent = vae.encode(pil_to_tensor(ref_pil))["samples"]
+            init_latent = self._vae_encode_samples(vae, pil_to_tensor(ref_pil))
             denoise = base_denoise
             print(msg(f"[Wumu基础定妆照工坊] 图生图基础定妆照 (denoise={base_denoise}, {width}×{height}, {steps}步)",
                       f"[Wumu Base] img2img (denoise={base_denoise}, {width}×{height}, {steps} steps)"))
@@ -644,7 +650,7 @@ class WumuCharacterAtelier(_WumuFlux2Mixin):
                                            "[Wumu工坊] ❌ base_use_reference is on — connect the base_reference_image input"))
                 # 参考图先统一到出图尺寸，保证 latent 形状与调度表一致
                 ref_pil = tensor_to_pil(base_reference_image).resize((width, height), Image.LANCZOS)
-                init_latent = vae.encode(pil_to_tensor(ref_pil))["samples"]
+                init_latent = self._vae_encode_samples(vae, pil_to_tensor(ref_pil))
                 denoise = base_denoise
                 print(msg(f"[Wumu工坊] ① 图生图基础定妆照 (denoise={base_denoise}, {width}×{height}, {steps}步)",
                           f"[Wumu工坊] ① base portrait img2img (denoise={base_denoise}, {width}×{height}, {steps} steps)"))
