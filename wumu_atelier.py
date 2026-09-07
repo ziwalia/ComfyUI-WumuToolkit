@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-"""节点A：Wumu 定妆照工坊（FLUX.2 Dev）v3
+"""节点A：Wumu 定妆照工坊（FLUX.2 Dev）v4
 FLUX.2 架构：128ch latent / 单Mistral编码器 / Flux2Scheduler / ReferenceLatent 图生图
 支持：Kontext 提示词原生兼容 / Turbo LoRA 8步加速 / boreal 写实风格
+v4 新增：① 基础照图生图（base_use_reference + base_reference_image + base_denoise）
+         ② 外部基础照重抽造型（slot_use_external_base + base_image，跳过①只重跑②）
 """
 import os, json, glob
 import torch
@@ -114,6 +116,12 @@ class WumuCharacterAtelier:
                     "tooltip": "随机种子\n固定=可重复\n基础用 seed，造型1用 seed+10…"}),
                 "use_turbo": ("BOOLEAN", {"default": False,
                     "tooltip": "勾选=自动挂载 Flux_2-Turbo-LoRA\n步数从 20 降到 8（速度提升 2.5 倍）\n画质略降，测试阶段推荐开启"}),
+                "base_use_reference": ("BOOLEAN", {"default": False,
+                    "tooltip": "① 基础照改用图生图\n勾选后连接 base_reference_image 输入口\n用已有照片做底，提示词继续驱动身份与质感\n适合：基于已有定妆照/真人参考照重出基础照"}),
+                "base_denoise": ("FLOAT", {"default": 0.75, "min": 0.05, "max": 1.0, "step": 0.05,
+                    "tooltip": "① 图生图重绘幅度（勾 base_use_reference 后生效）\n1.0=几乎重画，只参考构图\n0.7~0.8=保人物改质感细节（推荐）\n0.4~0.6=轻度修整\n0.3 以下基本不动"}),
+                "slot_use_external_base": ("BOOLEAN", {"default": False,
+                    "tooltip": "② 改用外部基础照（重抽造型专用）\n勾选后连接 base_image 输入口 → 跳过①，直接用外部基础照换装\n场景：①+② 全流程跑完后基础照满意、造型不满意\n拿保存的基础定妆照接进来，只重抽造型，1 分钟出结果"}),
                 "slot1_enable": ("BOOLEAN", {"default": True, "tooltip": "勾选=启用"}),
                 "slot1_name": ("STRING", {"default": "常服", "tooltip": "造型中文名(用于文件命名)"}),
                 "slot1_desc": ("STRING", {"default": outfit_default, "multiline": True,
@@ -135,7 +143,9 @@ class WumuCharacterAtelier:
             },
             "optional": {
                 "base_image": ("IMAGE",
-                    {"tooltip": "基础定妆照输入口（仅模式②时必须连接）"}),
+                    {"tooltip": "基础定妆照输入口\n· 模式【仅②】时必须连接\n· 勾选 slot_use_external_base 后=外部基础照（跳过①只重抽造型）"}),
+                "base_reference_image": ("IMAGE",
+                    {"tooltip": "① 图生图参考图输入口（勾 base_use_reference 后必须连接）\n建议喂：已有基础定妆照 / 素体照 / 真人参考照\n会自动缩放到出图尺寸"}),
             },
         }
 
@@ -226,15 +236,20 @@ class WumuCharacterAtelier:
         return cond
 
     def _sample_flux2(self, model, clip, prompt, guidance, w, h, steps, seed, vae,
-                      ref_latent=None, style_en=""):
+                      ref_latent=None, style_en="", init_latent=None, denoise=1.0):
         full_prompt = f"{prompt} {style_en}" if style_en else prompt
         cond = self._encode_flux2(clip, full_prompt, guidance, ref_latent)
-        latent = empty_flux2_latent(w, h)
-        sigmas = flux2_sigmas(steps, w, h)
+        latent_samples = init_latent if init_latent is not None else empty_flux2_latent(w, h)["samples"]
+        if init_latent is not None and denoise < 0.9999:
+            # 图生图：官方 KSampler 同款公式——用更大步数的调度表取尾段（起点 sigma 低 = 部分加噪）
+            new_steps = max(1, int(steps / denoise))
+            sigmas = flux2_sigmas(new_steps, w, h)[-(steps + 1):]
+        else:
+            sigmas = flux2_sigmas(steps, w, h)
         sampler = comfy.samplers.sampler_object("euler")
-        noise = comfy.sample.prepare_noise(latent["samples"], seed)
+        noise = comfy.sample.prepare_noise(latent_samples, seed)
         samples = comfy.sample.sample_custom(
-            model, noise, 1.0, sampler, sigmas, cond, cond, latent["samples"], seed=seed
+            model, noise, 1.0, sampler, sigmas, cond, cond, latent_samples, seed=seed
         )
         return vae.decode(samples)
 
@@ -261,13 +276,16 @@ class WumuCharacterAtelier:
     def run(self, mode, char_name, desc_en, style_name, style_strength,
             unet_name, clip_name, vae_name,
             steps, guidance, width, height, seed, use_turbo,
+            base_use_reference, base_denoise, slot_use_external_base,
             slot1_enable, slot1_name, slot1_desc,
             slot2_enable, slot2_name, slot2_desc,
             slot3_enable, slot3_name, slot3_desc,
             slot4_enable, slot4_name, slot4_desc,
             slot5_enable, slot5_name, slot5_desc,
-            auto_save, save_dir, base_image=None, **kwargs):
-        print(f"[Wumu工坊] 🚀 模式={mode} 角色={char_name} 风格={style_name} Turbo={'开' if use_turbo else '关'}")
+            auto_save, save_dir, base_image=None, base_reference_image=None, **kwargs):
+        print(f"[Wumu工坊] 🚀 模式={mode} 角色={char_name} 风格={style_name} "
+              f"Turbo={'开' if use_turbo else '关'} ①图生图={'开' if base_use_reference else '关'} "
+              f"②外部基础照={'开' if slot_use_external_base else '关'}")
 
         model, clip, vae = self._load_models(unet_name, clip_name, vae_name)
         model, clip, style_en = self._apply_style(model, clip, style_name, style_strength)
@@ -279,6 +297,10 @@ class WumuCharacterAtelier:
         if mode == "仅② 造型定妆照(需接基础图)":
             if base_image is None:
                 raise RuntimeError("[Wumu工坊] ❌ 模式②需要连接基础图输入（base_image）")
+            base_img = base_image
+        elif slot_use_external_base and base_image is not None:
+            # 重抽造型模式：跳过①，直接用外部基础照换装（基础照输出口透传，下游四联不受影响）
+            print("[Wumu工坊] 🔁 ② 外部基础照模式：跳过①，直接重抽造型")
             base_img = base_image
         else:
             # desc_en 已含完整模板（粘贴引擎输出）→ 原样使用；只写身份特征 → 套标准模板
@@ -294,9 +316,21 @@ class WumuCharacterAtelier:
                     f"soft even frontal studio lighting, photorealistic, sharp focus. "
                     f"no text, no watermark, no logo."
                 )
-            print(f"[Wumu工坊] ① 文生图基础定妆照 ({width}×{height}, {steps}步)")
+            init_latent = None
+            denoise = 1.0
+            if base_use_reference:
+                if base_reference_image is None:
+                    raise RuntimeError("[Wumu工坊] ❌ 已勾选①图生图（base_use_reference），请连接 base_reference_image 输入口")
+                # 参考图先统一到出图尺寸，保证 latent 形状与调度表一致
+                ref_pil = tensor_to_pil(base_reference_image).resize((width, height), Image.LANCZOS)
+                init_latent = vae.encode(pil_to_tensor(ref_pil))["samples"]
+                denoise = base_denoise
+                print(f"[Wumu工坊] ① 图生图基础定妆照 (denoise={base_denoise}, {width}×{height}, {steps}步)")
+            else:
+                print(f"[Wumu工坊] ① 文生图基础定妆照 ({width}×{height}, {steps}步)")
             base_img = self._sample_flux2(model, clip, base_prompt, guidance, width, height,
-                                          steps, seed, vae, ref_latent=None, style_en=style_en)
+                                          steps, seed, vae, ref_latent=None, style_en=style_en,
+                                          init_latent=init_latent, denoise=denoise)
             if auto_save:
                 p = os.path.join(save_dir, "资产", "角色", f"{char_name}_基础定妆照.png")
                 save_img(base_img, p)
@@ -345,7 +379,10 @@ class WumuCharacterAtelier:
         while len(out_slots) < 5:
             out_slots.append(blank)
 
-        info = f"角色={char_name} | 风格={style_name} | Turbo={'✓' if use_turbo else '✗'} | 基础✓ | 造型={sum(1 for s in slots if s[0] and s[2].strip())}张"
+        info = (f"角色={char_name} | 风格={style_name} | Turbo={'✓' if use_turbo else '✗'} | "
+                f"①{'图生图(denoise=' + str(base_denoise) + ')' if base_use_reference else '文生图'}"
+                f"{'→外部基础照' if (slot_use_external_base and base_image is not None) else ''} | "
+                f"造型={sum(1 for s in slots if s[0] and s[2].strip())}张")
         return (base_img, out_slots[0], out_slots[1], out_slots[2], out_slots[3], out_slots[4], info)
 
 NODE_CLASS_MAPPINGS_ATelier = {"WumuCharacterAtelier": WumuCharacterAtelier}
