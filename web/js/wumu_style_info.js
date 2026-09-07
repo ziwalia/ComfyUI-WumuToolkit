@@ -3,12 +3,74 @@ import { app } from "/scripts/app.js";
 const NODE_NAMES = ["WumuCharacterAtelier", "WumuTriptychAtelier"];
 
 let uiLang = "中文";
+let pluginVersion = "";
+
 async function fetchLang() {
     try {
         const r = await fetch("/wumu/lang");
         const d = await r.json();
         uiLang = d.lang || "中文";
+        pluginVersion = d.version || "";
     } catch (e) { /* 默认中文 */ }
+}
+
+// 控件行标题双语：中文模式「中文名 + 原始键名」，English 模式简洁英文名
+const LABELS = {
+    mode: ["模式", "Mode"],
+    char_name: ["角色", "Character"],
+    desc_en: ["人物英文描述", "Identity description"],
+    style_name: ["风格", "Style"],
+    style_strength: ["风格强度", "Style strength"],
+    unet_name: ["底模", "Base model"],
+    clip_name: ["文本编码器", "Text encoder"],
+    vae_name: ["VAE", "VAE"],
+    steps: ["步数", "Steps"],
+    guidance: ["引导值", "Guidance"],
+    width: ["宽", "Width"],
+    height: ["高", "Height"],
+    seed: ["种子", "Seed"],
+    use_turbo: ["Turbo加速", "Turbo"],
+    base_use_reference: ["①图生图", "① img2img"],
+    base_denoise: ["①重绘幅度", "① Denoise"],
+    slot_use_external_base: ["②外部基础照", "② External base"],
+    slot1_enable: ["造型1启用", "Outfit 1 on"],
+    slot2_enable: ["造型2启用", "Outfit 2 on"],
+    slot3_enable: ["造型3启用", "Outfit 3 on"],
+    slot4_enable: ["造型4启用", "Outfit 4 on"],
+    slot5_enable: ["造型5启用", "Outfit 5 on"],
+    slot1_name: ["造型1名称", "Outfit 1 name"],
+    slot2_name: ["造型2名称", "Outfit 2 name"],
+    slot3_name: ["造型3名称", "Outfit 3 name"],
+    slot4_name: ["造型4名称", "Outfit 4 name"],
+    slot5_name: ["造型5名称", "Outfit 5 name"],
+    slot1_desc: ["造型1提示词", "Outfit 1 prompt"],
+    slot2_desc: ["造型2提示词", "Outfit 2 prompt"],
+    slot3_desc: ["造型3提示词", "Outfit 3 prompt"],
+    slot4_desc: ["造型4提示词", "Outfit 4 prompt"],
+    slot5_desc: ["造型5提示词", "Outfit 5 prompt"],
+    canvas_w: ["画布宽", "Canvas W"],
+    canvas_h: ["画布高", "Canvas H"],
+    front_h: ["证件照高度", "ID photo height"],
+    side_h: ["全身照高度", "Body height"],
+    auto_save: ["自动保存", "Auto-save"],
+    save_views: ["另存单视角", "Save views"],
+    save_dir: ["保存目录", "Save dir"],
+    language: ["语言", "Language"],
+};
+
+function applyWidgetLabels(node) {
+    for (const w of node.widgets || []) {
+        const pair = LABELS[w.name];
+        if (!pair) continue;
+        w.label = uiLang === "English" ? pair[1] : `${pair[0]} ${w.name}`;
+    }
+    node.setDirtyCanvas(true, true);
+}
+
+function applyVersionTitle(node) {
+    if (pluginVersion && node.title && !node.title.includes(`v${pluginVersion}`)) {
+        node.title = `${node.title} v${pluginVersion}`;
+    }
 }
 
 function toast(msg) {
@@ -23,7 +85,7 @@ function toast(msg) {
     setTimeout(() => el.remove(), 4000);
 }
 
-// Wumu 语言切换 + 风格 LoRA 状态显示
+// Wumu 语言切换 + 行标题双语 + 标题栏版本号 + 风格 LoRA 状态显示
 app.registerExtension({
     name: "Wumu.StyleInfo",
 
@@ -33,31 +95,39 @@ app.registerExtension({
         const onNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
             const result = onNodeCreated?.apply(this, arguments);
+            const node = this;
 
-            // language 下拉：切换时保存全局设置（参数提示语言），刷新页面后生效
-            const langWidget = this.widgets?.find(w => w.name === "language");
+            // 初始：拉取全局语言与版本 → 行标题双语 + 标题栏版本号
+            fetchLang().then(() => {
+                applyWidgetLabels(node);
+                applyVersionTitle(node);
+            });
+
+            // language 下拉：保存全局设置；本节点行标题即时切换，参数提示刷新页面后生效
+            const langWidget = node.widgets?.find(w => w.name === "language");
             if (langWidget) {
                 const origLangCb = langWidget.callback;
                 langWidget.callback = function () {
                     origLangCb?.apply(this, arguments);
                     uiLang = langWidget.value;
+                    applyWidgetLabels(node);
                     fetch("/wumu/lang", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ lang: langWidget.value })
                     }).then(r => r.json())
                       .then(d => toast(d.lang === "English"
-                          ? "Tooltips will switch to English after page refresh"
-                          : "参数提示将在刷新页面后切换为中文"))
+                          ? "Labels switched; refresh the page to switch tooltips"
+                          : "本节点标签已切换；刷新页面后全部节点与参数提示同步切换"))
                       .catch(() => {});
                 };
             }
 
             // LoRA 状态行（仅定妆照工坊）
             if (nodeData.name === "WumuCharacterAtelier") {
-                const styleWidget = this.widgets?.find(w => w.name === "style_name");
+                const styleWidget = node.widgets?.find(w => w.name === "style_name");
                 if (styleWidget) {
-                    const infoWidget = this.addWidget("text", "LoRA状态", "检查中…", () => {}, { serialize: false });
+                    const infoWidget = node.addWidget("text", "LoRA状态", "检查中…", () => {}, { serialize: false });
                     infoWidget.disabled = true;
                     infoWidget.serialize = false;
 
@@ -85,7 +155,7 @@ app.registerExtension({
                             infoWidget.value = uiLang === "English" ? "Style status load failed" : "风格状态加载失败";
                             infoWidget.color = "#ff7b7b";
                         }
-                        this.setDirtyCanvas(true, true);
+                        node.setDirtyCanvas(true, true);
                     };
 
                     const origCallback = styleWidget.callback;

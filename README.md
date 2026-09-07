@@ -177,9 +177,10 @@ body shape and skin tone, now wearing [服装总类与设计系统，1-2 句].
 
 ## 🌐 语言 / Language
 
-两个工坊节点均有 `language` 下拉（默认 **中文**）：
+两个工坊节点均有 `language` 下拉（默认 **中文**），节点标题栏会显示当前插件版本号（如 `v1.2.1`，读取自 `pyproject.toml`）：
 
-- **中文**：产物落盘 `资产\角色\`，文件名 `角色_造型_证件照/正面图/侧面图/背面图/四联图.png` —— wumu-movie 引擎 / 导演台 `角色名@造型名` 引用契约所需，**跑 wumu-movie 流水线请保持此档**
+- **控件行标题双语**：中文模式显示「中文名 + 原始键名」（如 `风格 style_name`），English 模式显示简洁英文名（如 `Style`）——切换后本节点即时生效，其他节点刷新页面后生效
+- **中文**（默认）：产物落盘 `资产\角色\`，文件名 `角色_造型_证件照/正面图/侧面图/背面图/四联图.png` —— wumu-movie 引擎 / 导演台 `角色名@造型名` 引用契约所需，**跑 wumu-movie 流水线请保持此档**
 - **English**：产物落盘 `assets\characters\`，文件名 `character_outfit_id/front/side/back/quadtych.png`，四视角生成提示词与 info/日志同步切英文 —— 供国际用户接入自有流水线
 
 参数提示（tooltip）语言为全局设置：在节点上切换 `language` 后自动保存，**刷新页面**后所有 Wumu 节点的参数提示切换语言（模式选项、风格名、输出端口名等数据项保持原文）。
@@ -202,6 +203,7 @@ body shape and skin tone, now wearing [服装总类与设计系统，1-2 句].
 
 ## 📋 版本历史
 
+- **v1.2.1**：控件行标题双语（中文模式「中文名 + 键名」，English 模式英文名，切换即时生效）；节点标题栏显示版本号（读自 `pyproject.toml`，`/wumu/lang` 返回 `version`）
 - **v1.2.0**：新增 `language` 中英文下拉（默认中文）——节点输出（落盘目录/文件后缀/四视角提示词/info/日志）按节点独立切换；参数提示双语化（`wumu_lang` 模块 + `/wumu/lang` API，切换后刷新页面生效）；合并 v1.1.0 的基础照图生图与外部基础照重抽造型
 - **v1.1.0**（定妆照工坊内部版本 v4）：新增 ① 基础照图生图（`base_use_reference` + `base_reference_image` + `base_denoise`）；② 外部基础照重抽造型（`slot_use_external_base`，跳过 ① 只重跑 ②，基础照输出口透传）；③ 工作流内嵌手册扩充提示词样板
 - **v1.0.0**：定妆照工坊（FLUX.2 Dev）+ 四联图工坊（Klein）+ 联动工作流首发

@@ -38,7 +38,8 @@ try:
 
     @PromptServer.instance.routes.get("/wumu/lang")
     async def wumu_get_lang(request):
-        return web.json_response({"lang": wumu_lang.get_lang(), "supported": wumu_lang.SUPPORTED})
+        return web.json_response({"lang": wumu_lang.get_lang(), "supported": wumu_lang.SUPPORTED,
+                                  "version": wumu_lang.PLUGIN_VERSION})
 
     @PromptServer.instance.routes.post("/wumu/lang")
     async def wumu_set_lang(request):
@@ -46,7 +47,8 @@ try:
             data = await request.json()
         except Exception:
             data = {}
-        return web.json_response({"lang": wumu_lang.set_lang(data.get("lang"))})
+        return web.json_response({"lang": wumu_lang.set_lang(data.get("lang")),
+                                  "version": wumu_lang.PLUGIN_VERSION})
 except Exception as e:
     print(f"[WumuToolkit] ⚠ 语言API注册失败: {e}")
 

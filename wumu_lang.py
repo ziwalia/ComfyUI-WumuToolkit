@@ -5,10 +5,26 @@
   INPUT_TYPES 通过 L() 读取 → 刷新页面后参数提示（tooltip）切换语言。默认中文。
 """
 import os
+import re
 import json
 
 LANG_FILE = os.path.join(os.path.dirname(__file__), "lang.json")
 SUPPORTED = ["中文", "English"]
+
+
+def _plugin_version():
+    """从 pyproject.toml 读取版本号（单一来源，前端标题栏显示用）"""
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "pyproject.toml"), "r", encoding="utf-8") as f:
+            m = re.search(r'^version\s*=\s*"([^"]+)"', f.read(), re.M)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return "0.0.0"
+
+
+PLUGIN_VERSION = _plugin_version()
 
 # 资产落盘子目录：资产\角色 ↔ assets\characters
 ASSET_DIRS = {"中文": ("资产", "角色"), "English": ("assets", "characters")}
