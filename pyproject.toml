@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-wumutoolkit"
 description = "wumu-movie 专用节点集：定妆照工坊（FLUX.2 Dev）+ 四联图工坊（Klein），一个节点产出角色全套装帧参考图"
-version = "1.1.0"
+version = "1.2.0"
 license = { text = "MIT" }
 dependencies = []
 

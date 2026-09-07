@@ -1,1 +1,893 @@
-{"id":"wumu-char-assets-v2","revision":0,"last_node_id":32,"last_link_id":7,"nodes":[{"id":30,"type":"MarkdownNote","pos":[-620,-300],"size":[640,580],"flags":{},"order":0,"mode":0,"inputs":[],"outputs":[],"properties":{},"widgets_values":["# 🎬 Wumu 人物资产全流程（联动版）\n\n一次队列 = 基础定妆照 + 造型定妆照 + 四联图全套\n\n## 使用步骤\n1. **左节点（定妆照工坊）**：改 `角色名` / `人物英文描述` / `造型槽`（要几个造型就启用几个槽）\n2. **右节点（四联图工坊）**：`角色名` 和 `造型名` 改成和左边**同名**（文件命名用）\n3. 连线已接好：造型1-5 全部连过去了，没启用的槽会自动跳过\n4. 点 Queue，等两个节点跑完\n5. 产物自动保存到 `F:\\AI\\MINIMAXH3\\资产\\角色\\`\n\n## 产物文件（每个造型 6 个文件）\n`角色_造型_定妆照` + `角色_造型_证件照` + `角色_造型_正面图` + `角色_造型_侧面图` + `角色_造型_背面图` + `角色_造型_四联图`\n外加 `角色_基础定妆照`\n\n## 注意\n- 左节点跑 FLUX.2 Dev（每造型约1-2分钟），右节点跑 Klein（每造型四链约半分钟，纯白背景）\n- 手动模式：删掉连线，加一个 LoadImage 连到右节点任意 slot\n- 首次运行需重启 ComfyUI 加载新节点\n- 详细参数说明看左右两张 📖 手册便签"],"color":"#432","bgcolor":"#653"},{"id":31,"type":"MarkdownNote","pos":[-1350,360],"size":[680,1150],"flags":{},"order":1,"mode":0,"inputs":[],"outputs":[],"properties":{},"widgets_values":["# 📖 定妆照工坊 参数手册\n（左侧节点，FLUX.2 Dev 出基础照+造型照）\n\n**模式** 默认 `①+② 全流程`\n`仅①` 只出基础定妆照；`仅②` 用已有基础图直接换装（需连 base_image 输入口）\n\n**角色** 默认 `角色名`\n中文角色名，只用于文件命名\n\n**人物英文描述** 只写身份特征：国籍人种→年龄体型→脸型发型→肤色→特殊标记。国籍写最前面防人种漂移。❌不要写服装。也可直接粘贴引擎生成的完整提示词（节点自动剥离模板）\n\n**风格** 默认 `写实电影`（boreal LoRA）\n**风格强度** 默认 `0.8`，写实类建议 0.6~0.8\n\n**三个模型下拉** 默认即正确：flux2_dev_fp8mixed / mistral_3_small_flux2_bf16 / full_encoder_small_decoder\n\n**步数** 默认 `20`（FLUX.2 标准）；开 turbo 后改 `8`\n**引导值** 默认 `4.0`，长提示词可降到 2~3\n**宽×高** 默认 `832×1216` 竖构图全身照标准，不要改\n**种子** 默认随机；造型N 自动用 seed+N×10\n\n**turbo加速** 默认关。开=挂 Turbo LoRA 快2.5倍（步数记得改8），画质略降。测试期开，正式出片关\n\n**造型槽×5**（启用勾选+名称+服装提示词）\n服装提示词模板（抄了改服装部分）：\n`Edit the reference photo: the SAME person with identical face, hairstyle, body shape and skin tone, now wearing [服装描述]. Standing facing the camera, full body visible head to toe, arms relaxed at sides with hands visible, seamless pure white studio background, nothing else in frame, soft even frontal studio lighting, photorealistic, sharp focus. no text, no watermark, no logo.`\n\n**自动保存** 默认开 → 存 `F:\\AI\\MINIMAXH3\\资产\\角色\\角色_造型_定妆照.png`\n\n**base_image 输入口**（节点左侧）仅模式②必须连接：喂已有基础定妆照"],"color":"#432","bgcolor":"#653"},{"id":32,"type":"MarkdownNote","pos":[89,-435],"size":[640,660],"flags":{},"order":2,"mode":0,"inputs":[],"outputs":[],"properties":{},"widgets_values":["# 📖 四联图工坊 参数手册\n（下方节点，Klein 出四视角+合成图）\n\n**角色** 与左节点**同名**（文件命名用）\n\n**三个模型下拉** 默认即正确：flux-2-klein-9b-kv-fp8 / qwen_3_8b_fp8mixed / full_encoder_small_decoder\n\n**步数** 默认 `4`（Klein 标准值，不用动）\n**种子** 默认随机。每槽 +100；四条链再 +1/+10/+20/+30。侧/后视角脸跑偏就换种子重抽\n\n**画布宽×高** 默认 `1920×1080`（导演台资产库横版标准，不要改）\n**证件照高度** 默认 `960`（四图自动适配后实际约745px）\n**全身照高度** 默认 `820`（适配后约637px，正/侧/后三张共用）\n超宽自动等比缩小，比例调这两个就行\n\n**造型名×5** 槽位一一对应左节点启用的造型，**名称必须相同**\n\n**自动保存** 默认开 → 存 `资产\\角色\\`\n**另存单视角** 默认开 → 证件照/正面图/侧面图/背面图各一张（导演台引擎引用必需，建议保持开）\n\n**保存目录** 默认 `F:\\AI\\MINIMAXH3`\n\n**输入口 slot1~5**（节点左侧）\n联动：接定妆照工坊『造型N定妆照』输出；手动：接 LoadImage。连几个跑几个，没连的自动跳过；工坊禁用槽输出的占位黑图也会被自动跳过"],"color":"#432","bgcolor":"#653"},{"id":21,"type":"PreviewImage","pos":[885,-104],"size":[915,814],"flags":{},"order":4,"mode":0,"inputs":[{"localized_name":"图像","name":"images","type":"IMAGE","link":6}],"outputs":[{"localized_name":"images","name":"images","type":"IMAGE","links":[]}],"properties":{"Node name for S&R":"PreviewImage"},"widgets_values":[]},{"id":22,"type":"PreviewImage","pos":[730,943],"size":[1318,666],"flags":{},"order":6,"mode":0,"inputs":[{"localized_name":"图像","name":"images","type":"IMAGE","link":7}],"outputs":[{"localized_name":"images","name":"images","type":"IMAGE","links":[]}],"properties":{"Node name for S&R":"PreviewImage"},"widgets_values":[]},{"id":10,"type":"WumuTriptychAtelier","pos":[140,420],"size":[400,830],"flags":{},"order":5,"mode":0,"inputs":[{"localized_name":"slot1_image","name":"slot1_image","shape":7,"type":"IMAGE","link":1},{"localized_name":"slot2_image","name":"slot2_image","shape":7,"type":"IMAGE","link":2},{"localized_name":"slot3_image","name":"slot3_image","shape":7,"type":"IMAGE","link":3},{"localized_name":"slot4_image","name":"slot4_image","shape":7,"type":"IMAGE","link":4},{"localized_name":"slot5_image","name":"slot5_image","shape":7,"type":"IMAGE","link":5},{"localized_name":"char_name","name":"char_name","type":"STRING","widget":{"name":"char_name"},"link":null},{"localized_name":"unet_name","name":"unet_name","type":"COMBO","widget":{"name":"unet_name"},"link":null},{"localized_name":"clip_name","name":"clip_name","type":"COMBO","widget":{"name":"clip_name"},"link":null},{"localized_name":"vae_name","name":"vae_name","type":"COMBO","widget":{"name":"vae_name"},"link":null},{"localized_name":"steps","name":"steps","type":"INT","widget":{"name":"steps"},"link":null},{"localized_name":"seed","name":"seed","type":"INT","widget":{"name":"seed"},"link":null},{"localized_name":"canvas_w","name":"canvas_w","type":"INT","widget":{"name":"canvas_w"},"link":null},{"localized_name":"canvas_h","name":"canvas_h","type":"INT","widget":{"name":"canvas_h"},"link":null},{"localized_name":"front_h","name":"front_h","type":"INT","widget":{"name":"front_h"},"link":null},{"localized_name":"side_h","name":"side_h","type":"INT","widget":{"name":"side_h"},"link":null},{"localized_name":"slot1_name","name":"slot1_name","type":"STRING","widget":{"name":"slot1_name"},"link":null},{"localized_name":"slot2_name","name":"slot2_name","type":"STRING","widget":{"name":"slot2_name"},"link":null},{"localized_name":"slot3_name","name":"slot3_name","type":"STRING","widget":{"name":"slot3_name"},"link":null},{"localized_name":"slot4_name","name":"slot4_name","type":"STRING","widget":{"name":"slot4_name"},"link":null},{"localized_name":"slot5_name","name":"slot5_name","type":"STRING","widget":{"name":"slot5_name"},"link":null},{"localized_name":"auto_save","name":"auto_save","type":"BOOLEAN","widget":{"name":"auto_save"},"link":null},{"localized_name":"save_views","name":"save_views","type":"BOOLEAN","widget":{"name":"save_views"},"link":null},{"localized_name":"save_dir","name":"save_dir","type":"STRING","widget":{"name":"save_dir"},"link":null}],"outputs":[{"localized_name":"四联图1","name":"四联图1","type":"IMAGE","links":[7]},{"localized_name":"四联图2","name":"四联图2","type":"IMAGE","links":null},{"localized_name":"四联图3","name":"四联图3","type":"IMAGE","links":null},{"localized_name":"四联图4","name":"四联图4","type":"IMAGE","links":null},{"localized_name":"四联图5","name":"四联图5","type":"IMAGE","links":null},{"localized_name":"info","name":"info","type":"STRING","links":null}],"properties":{"Node name for S&R":"WumuTriptychAtelier"},"widgets_values":["顾一苇","flux-2-klein-9b-kv-fp8.safetensors","qwen_3_8b_fp8mixed.safetensors","full_encoder_small_decoder.safetensors",4,3009485762,"randomize",1920,1080,960,1000,"常服","造型2","造型3","造型4","造型5",true,true,"F:\\AI\\MINIMAXH3","中文"]},{"id":1,"type":"WumuCharacterAtelier","pos":[-620,360],"size":[420,1150],"flags":{},"order":3,"mode":0,"inputs":[{"localized_name":"base_image","name":"base_image","shape":7,"type":"IMAGE","link":null},{"localized_name":"mode","name":"mode","type":"COMBO","widget":{"name":"mode"},"link":null},{"localized_name":"char_name","name":"char_name","type":"STRING","widget":{"name":"char_name"},"link":null},{"localized_name":"desc_en","name":"desc_en","type":"STRING","widget":{"name":"desc_en"},"link":null},{"localized_name":"style_name","name":"style_name","type":"COMBO","widget":{"name":"style_name"},"link":null},{"localized_name":"style_strength","name":"style_strength","type":"FLOAT","widget":{"name":"style_strength"},"link":null},{"localized_name":"unet_name","name":"unet_name","type":"COMBO","widget":{"name":"unet_name"},"link":null},{"localized_name":"clip_name","name":"clip_name","type":"COMBO","widget":{"name":"clip_name"},"link":null},{"localized_name":"vae_name","name":"vae_name","type":"COMBO","widget":{"name":"vae_name"},"link":null},{"localized_name":"steps","name":"steps","type":"INT","widget":{"name":"steps"},"link":null},{"localized_name":"guidance","name":"guidance","type":"FLOAT","widget":{"name":"guidance"},"link":null},{"localized_name":"width","name":"width","type":"INT","widget":{"name":"width"},"link":null},{"localized_name":"height","name":"height","type":"INT","widget":{"name":"height"},"link":null},{"localized_name":"seed","name":"seed","type":"INT","widget":{"name":"seed"},"link":null},{"localized_name":"use_turbo","name":"use_turbo","type":"BOOLEAN","widget":{"name":"use_turbo"},"link":null},{"localized_name":"slot1_enable","name":"slot1_enable","type":"BOOLEAN","widget":{"name":"slot1_enable"},"link":null},{"localized_name":"slot1_name","name":"slot1_name","type":"STRING","widget":{"name":"slot1_name"},"link":null},{"localized_name":"slot1_desc","name":"slot1_desc","type":"STRING","widget":{"name":"slot1_desc"},"link":null},{"localized_name":"slot2_enable","name":"slot2_enable","type":"BOOLEAN","widget":{"name":"slot2_enable"},"link":null},{"localized_name":"slot2_name","name":"slot2_name","type":"STRING","widget":{"name":"slot2_name"},"link":null},{"localized_name":"slot2_desc","name":"slot2_desc","type":"STRING","widget":{"name":"slot2_desc"},"link":null},{"localized_name":"slot3_enable","name":"slot3_enable","type":"BOOLEAN","widget":{"name":"slot3_enable"},"link":null},{"localized_name":"slot3_name","name":"slot3_name","type":"STRING","widget":{"name":"slot3_name"},"link":null},{"localized_name":"slot3_desc","name":"slot3_desc","type":"STRING","widget":{"name":"slot3_desc"},"link":null},{"localized_name":"slot4_enable","name":"slot4_enable","type":"BOOLEAN","widget":{"name":"slot4_enable"},"link":null},{"localized_name":"slot4_name","name":"slot4_name","type":"STRING","widget":{"name":"slot4_name"},"link":null},{"localized_name":"slot4_desc","name":"slot4_desc","type":"STRING","widget":{"name":"slot4_desc"},"link":null},{"localized_name":"slot5_enable","name":"slot5_enable","type":"BOOLEAN","widget":{"name":"slot5_enable"},"link":null},{"localized_name":"slot5_name","name":"slot5_name","type":"STRING","widget":{"name":"slot5_name"},"link":null},{"localized_name":"slot5_desc","name":"slot5_desc","type":"STRING","widget":{"name":"slot5_desc"},"link":null},{"localized_name":"auto_save","name":"auto_save","type":"BOOLEAN","widget":{"name":"auto_save"},"link":null},{"localized_name":"save_dir","name":"save_dir","type":"STRING","widget":{"name":"save_dir"},"link":null}],"outputs":[{"localized_name":"基础定妆照","name":"基础定妆照","type":"IMAGE","links":[6]},{"localized_name":"造型1定妆照","name":"造型1定妆照","type":"IMAGE","links":[1]},{"localized_name":"造型2定妆照","name":"造型2定妆照","type":"IMAGE","links":[2]},{"localized_name":"造型3定妆照","name":"造型3定妆照","type":"IMAGE","links":[3]},{"localized_name":"造型4定妆照","name":"造型4定妆照","type":"IMAGE","links":[4]},{"localized_name":"造型5定妆照","name":"造型5定妆照","type":"IMAGE","links":[5]},{"localized_name":"info","name":"info","type":"STRING","links":null}],"properties":{"Node name for S&R":"WumuCharacterAtelier"},"widgets_values":["①+② 全流程","顾一苇","Realistic film-grade character reference photography. Chinese Han ethnicity woman, 22, round face, ponytail, petite, flight-attendant cap never quite straight, standing facing the camera squarely, full body visible head to toe, arms relaxed at sides with hands visible. Black ponytail with a crooked flight-cap crease, round face with soft cheeks, big watery eyes that widen when flustered, small straight nose, petal-soft lips, 22 years old with baby-fat cheeks and no wrinkles, petite 155cm slight build with nervous fidgeting hands Wearing plain simple underwear only, no clothing, no accessories, no jewelry. True skin texture with natural fine lines and visible pores, matte skin finish, no oily sheen, natural unretouched complexion. Seamless pure white studio background, nothing else in frame; soft top key light with gentle twin side fill and a subtle hair rim light, soft lighting ratio. 8K ultra-realistic, commercial portrait photography, 85mm f1.8 lens, subtle film grain, cinematic atmosphere, clean transparent image with rich detail. (avoid: over-smoothed waxy plastic skin, beauty-filter face, distorted facial features, deformed hands, twisted limbs, cartoon, anime, oil painting, illustration)","写实电影",0.8,"flux2_dev_fp8mixed.safetensors","mistral_3_small_flux2_bf16.safetensors","full_encoder_small_decoder.safetensors",8,4,832,1216,3291267020,"randomize",true,true,"常服","Edit the reference photo: the SAME person with identical face, hairstyle, body shape and skin tone, now wearing a slim-fitting futuristic in-starship attendant uniform in the same suit design system, light-duty class tailored for her petite 155cm frame with soft rounded contours, NOT bulky and not military-looking: pearl-white smooth segmented armor panels over the torso and shoulders with pale blue-grey flexible fabric between segments, panels thinner and lighter than heavy-duty crew suits; glowing cyan piping tracing the collar, cuffs and armor seams with a subtle breathing pulse; a compact attendant service module on the chest (cabin comms and passenger info screen, no heavy buttons) with one small red indicator; no heavy backpack — only a pair of slim curved hip storage wings; an enlarged silver-white communication ear pod on her right ear (her signature gear, indicator gently blinking); a slim white metal neck ring; a fully transparent clear dome helmet with her round-faced features fully visible, thin white helmet frame, one small top lamp. Standing facing the camera, full body visible head to toe, arms relaxed at sides, her fingers naturally intertwined in a nervous habit. True skin texture with baby-fat cheeks, matte finish, no oily sheen. Seamless pure white studio background; soft top key light with gentle twin side fill and soft fill inside the transparent helmet. 8K ultra-realistic, commercial portrait photography, 85mm f1.8 lens, subtle film grain, cinematic atmosphere. (avoid: bulky silhouette, heavy military armor, over-smoothed waxy skin, exaggerated youthfulness, distorted facial features, deformed hands, twisted limbs, cartoon, anime, oil painting)",false,"造型2","",false,"造型3","",false,"造型4","",false,"造型5","",true,"F:\\AI\\MINIMAXH3","中文"]}],"links":[[1,1,1,10,0,"IMAGE"],[2,1,2,10,1,"IMAGE"],[3,1,3,10,2,"IMAGE"],[4,1,4,10,3,"IMAGE"],[5,1,5,10,4,"IMAGE"],[6,1,0,21,0,"IMAGE"],[7,10,0,22,0,"IMAGE"]],"groups":[],"config":{},"extra":{"ds":{"scale":1.0717944050000108,"offset":[654,-133]}},"version":0.4}
+{
+  "id": "wumu-char-assets-v2",
+  "revision": 0,
+  "last_node_id": 32,
+  "last_link_id": 7,
+  "nodes": [
+    {
+      "id": 30,
+      "type": "MarkdownNote",
+      "pos": [
+        -620,
+        -300
+      ],
+      "size": [
+        640,
+        580
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# 🎬 Wumu 人物资产全流程（联动版）\n\n一次队列 = 基础定妆照 + 造型定妆照 + 四联图全套\n\n## 使用步骤\n1. **左节点（定妆照工坊）**：改 `角色名` / `人物英文描述` / `造型槽`（要几个造型就启用几个槽）\n2. **右节点（四联图工坊）**：`角色名` 和 `造型名` 改成和左边**同名**（文件命名用）\n3. 连线已接好：造型1-5 全部连过去了，没启用的槽会自动跳过\n4. 点 Queue，等两个节点跑完\n5. 产物自动保存到 `F:\\AI\\MINIMAXH3\\资产\\角色\\`\n\n## 产物文件（每个造型 6 个文件）\n`角色_造型_定妆照` + `角色_造型_证件照` + `角色_造型_正面图` + `角色_造型_侧面图` + `角色_造型_背面图` + `角色_造型_四联图`\n外加 `角色_基础定妆照`\n\n## v4 新增：造型不满意快速重抽\n基础照满意但造型不满意时：勾选左节点的「②改用外部基础照」→ LoadImage 加载基础定妆照连到 base_image → 直接 Queue（跳过①只重抽造型）。详见 📖 手册。\n\n## 注意\n- 左节点跑 FLUX.2 Dev（每造型约1-2分钟），右节点跑 Klein（每造型四链约半分钟，纯白背景）\n- 手动模式：删掉连线，加一个 LoadImage 连到右节点任意 slot\n- 首次运行需重启 ComfyUI 加载新节点\n- 详细参数说明看左右两张 📖 手册便签"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 31,
+      "type": "MarkdownNote",
+      "pos": [
+        -1350,
+        360
+      ],
+      "size": [
+        680,
+        1150
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# 📖 定妆照工坊 参数手册\n（左侧节点，FLUX.2 Dev 出基础照+造型照）\n\n**模式** 默认 `①+② 全流程`\n`仅①` 只出基础定妆照；`仅②` 用已有基础图直接换装（需连 base_image 输入口）\n\n**角色** 默认 `角色名`\n中文角色名，只用于文件命名\n\n**人物英文描述** 只写身份特征：国籍人种→年龄体型→脸型发型→肤色→特殊标记。国籍写最前面防人种漂移。❌不要写服装。也可直接粘贴引擎生成的完整提示词（节点自动剥离模板）\n\n**风格** 默认 `写实电影`（boreal LoRA）\n**风格强度** 默认 `0.8`，写实类建议 0.6~0.8\n\n**三个模型下拉** 默认即正确：flux2_dev_fp8mixed / mistral_3_small_flux2_bf16 / full_encoder_small_decoder\n\n**步数** 默认 `20`（FLUX.2 标准）；开 turbo 后改 `8`\n**引导值** 默认 `4.0`，长提示词可降到 2~3\n**宽×高** 默认 `832×1216` 竖构图全身照标准，不要改\n**种子** 默认随机；造型N 自动用 seed+N×10\n\n**turbo加速** 默认关。开=挂 Turbo LoRA 快2.5倍（步数记得改8），画质略降。测试期开，正式出片关\n\n**造型槽×5**（启用勾选+名称+服装提示词）\n服装提示词模板（抄了改服装部分）：\n`Edit the reference photo: the SAME person with identical face, hairstyle, body shape and skin tone, now wearing [服装描述]. Standing facing the camera, full body visible head to toe, arms relaxed at sides with hands visible, seamless pure white studio background, nothing else in frame, soft even frontal studio lighting, photorealistic, sharp focus. no text, no watermark, no logo.`\n\n**自动保存** 默认开 → 存 `F:\\AI\\MINIMAXH3\\资产\\角色\\角色_造型_定妆照.png`\n\n**base_image 输入口**（节点左侧）仅模式②必须连接：喂已有基础定妆照\n\n---\n\n## 🆕 v4 新功能：两个图生图开关\n\n### ① 基础照图生图（base_use_reference）\n默认**关**（文生图）。勾选后：\n- 连接节点左侧新增的 **base_reference_image** 输入口（喂已有定妆照/素体照/真人参考照，自动缩放到出图尺寸）\n- 配合 **base_denoise（重绘幅度）** 控制贴合度：\n\n| denoise | 效果 | 适用 |\n|---|---|---|\n| 0.9~1.0 | 几乎重画，只参考构图姿势 | 换风格重出 |\n| 0.7~0.8 | 保人物、改质感细节（推荐） | 修皮肤/光影/清晰度 |\n| 0.4~0.6 | 轻度修整 | 微调 |\n| ≤0.3 | 基本不动 | 慎用 |\n\n### ② 外部基础照重抽造型（slot_use_external_base）⭐ 高频用法\n**场景：①+② 全流程跑完后，基础定妆照很满意、造型定妆照不满意。**\n1. 勾选 **slot_use_external_base**\n2. 加一个 LoadImage 节点，加载已保存的「角色_基础定妆照.png」\n3. 连到本节点 **base_image** 输入口\n4. 直接 Queue —— **跳过①（省 1-2 分钟），只重抽造型**；基础照输出口透传原图，下游四联图照常工作\n5. 不满意就换种子再 Queue；满意后记得**取消勾选**恢复正常全流程\n\n---\n\n## 📝 提示词样板（照抄改空即可）\n\n### 基础定妆照样板（desc_en，只写\"人\"，不写服装）\n```\n[国籍人种放最前，防漂移] Chinese Han ethnicity woman, 22,\n[年龄体型] petite 155cm slight build,\n[脸型发型+标志物] round face with soft cheeks, black ponytail,\nflight-attendant cap never quite straight,\n[肤质细节] true skin texture with visible pores, matte finish,\n[站姿] standing facing the camera, full body visible head to toe,\narms relaxed at sides with hands visible\n```\n写完身份特征即可，模板（素体/白棚/布光/负面清单）节点自动补。\n反面清单自动附加：蜡感皮肤、美颜脸、畸形手、卡通插画。\n\n### 造型定妆照样板（slotN_desc，Kontext 句式）\n固定开头（锁人）+ 只改中段服装 + 结尾节点自动补白棚布光：\n```\nEdit the reference photo: the SAME person with identical face, hairstyle,\nbody shape and skin tone, now wearing [服装总类与设计系统，1-2 句].\n\n[材质与颜色] pearl-white smooth segmented armor panels over torso\nand shoulders with pale blue-grey flexible fabric between segments,\n[细节层次] glowing cyan piping tracing the collar, cuffs and armor seams,\n[标志配饰] an enlarged silver-white communication ear pod on her right ear,\n[适配体型] tailored for her petite 155cm frame, not bulky,\n[负面] no heavy buttons, no military look\n```\n**要诀**：① 服装按\"总类→材质→颜色→细节→配饰→合身度\"分层写，每层一小句；\n② 写 1 个标志配饰（角色记忆点）；③ 站姿/背景/布光可省（自动补），\n但**负面清单**（no text, no watermark...）建议保留。\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 32,
+      "type": "MarkdownNote",
+      "pos": [
+        89,
+        -435
+      ],
+      "size": [
+        640,
+        660
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# 📖 四联图工坊 参数手册\n（下方节点，Klein 出四视角+合成图）\n\n**角色** 与左节点**同名**（文件命名用）\n\n**三个模型下拉** 默认即正确：flux-2-klein-9b-kv-fp8 / qwen_3_8b_fp8mixed / full_encoder_small_decoder\n\n**步数** 默认 `4`（Klein 标准值，不用动）\n**种子** 默认随机。每槽 +100；四条链再 +1/+10/+20/+30。侧/后视角脸跑偏就换种子重抽\n\n**画布宽×高** 默认 `1920×1080`（导演台资产库横版标准，不要改）\n**证件照高度** 默认 `960`（四图自动适配后实际约745px）\n**全身照高度** 默认 `820`（适配后约637px，正/侧/后三张共用）\n超宽自动等比缩小，比例调这两个就行\n\n**造型名×5** 槽位一一对应左节点启用的造型，**名称必须相同**\n\n**自动保存** 默认开 → 存 `资产\\角色\\`\n**另存单视角** 默认开 → 证件照/正面图/侧面图/背面图各一张（导演台引擎引用必需，建议保持开）\n\n**保存目录** 默认 `F:\\AI\\MINIMAXH3`\n\n**输入口 slot1~5**（节点左侧）\n联动：接定妆照工坊『造型N定妆照』输出；手动：接 LoadImage。连几个跑几个，没连的自动跳过；工坊禁用槽输出的占位黑图也会被自动跳过"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 21,
+      "type": "PreviewImage",
+      "pos": [
+        885,
+        -104
+      ],
+      "size": [
+        915,
+        814
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 22,
+      "type": "PreviewImage",
+      "pos": [
+        730,
+        943
+      ],
+      "size": [
+        1318,
+        666
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "WumuTriptychAtelier",
+      "pos": [
+        140,
+        420
+      ],
+      "size": [
+        400,
+        830
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "slot1_image",
+          "name": "slot1_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "localized_name": "slot2_image",
+          "name": "slot2_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "localized_name": "slot3_image",
+          "name": "slot3_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "localized_name": "slot4_image",
+          "name": "slot4_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "localized_name": "slot5_image",
+          "name": "slot5_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "localized_name": "char_name",
+          "name": "char_name",
+          "type": "STRING",
+          "widget": {
+            "name": "char_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "canvas_w",
+          "name": "canvas_w",
+          "type": "INT",
+          "widget": {
+            "name": "canvas_w"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "canvas_h",
+          "name": "canvas_h",
+          "type": "INT",
+          "widget": {
+            "name": "canvas_h"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "front_h",
+          "name": "front_h",
+          "type": "INT",
+          "widget": {
+            "name": "front_h"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "side_h",
+          "name": "side_h",
+          "type": "INT",
+          "widget": {
+            "name": "side_h"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_name",
+          "name": "slot1_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot1_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_name",
+          "name": "slot2_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot2_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_name",
+          "name": "slot3_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot3_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_name",
+          "name": "slot4_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot4_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_name",
+          "name": "slot5_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot5_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_save",
+          "name": "auto_save",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_save"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_views",
+          "name": "save_views",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save_views"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_dir",
+          "name": "save_dir",
+          "type": "STRING",
+          "widget": {
+            "name": "save_dir"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "四联图1",
+          "name": "四联图1",
+          "type": "IMAGE",
+          "links": [
+            7
+          ]
+        },
+        {
+          "localized_name": "四联图2",
+          "name": "四联图2",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "四联图3",
+          "name": "四联图3",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "四联图4",
+          "name": "四联图4",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "四联图5",
+          "name": "四联图5",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WumuTriptychAtelier"
+      },
+      "widgets_values": [
+        "顾一苇",
+        "flux-2-klein-9b-kv-fp8.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
+        "full_encoder_small_decoder.safetensors",
+        4,
+        3009485762,
+        "randomize",
+        1920,
+        1080,
+        960,
+        1000,
+        "常服",
+        "造型2",
+        "造型3",
+        "造型4",
+        "造型5",
+        true,
+        true,
+        "F:\\AI\\MINIMAXH3",
+        "中文"
+      ]
+    },
+    {
+      "id": 1,
+      "type": "WumuCharacterAtelier",
+      "pos": [
+        -620,
+        360
+      ],
+      "size": [
+        420,
+        1150
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "base_image",
+          "name": "base_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "char_name",
+          "name": "char_name",
+          "type": "STRING",
+          "widget": {
+            "name": "char_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "desc_en",
+          "name": "desc_en",
+          "type": "STRING",
+          "widget": {
+            "name": "desc_en"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "style_name",
+          "name": "style_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "style_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "style_strength",
+          "name": "style_strength",
+          "type": "FLOAT",
+          "widget": {
+            "name": "style_strength"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "guidance",
+          "name": "guidance",
+          "type": "FLOAT",
+          "widget": {
+            "name": "guidance"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "use_turbo",
+          "name": "use_turbo",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_turbo"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_enable",
+          "name": "slot1_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot1_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_name",
+          "name": "slot1_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot1_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot1_desc",
+          "name": "slot1_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot1_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_enable",
+          "name": "slot2_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot2_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_name",
+          "name": "slot2_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot2_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot2_desc",
+          "name": "slot2_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot2_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_enable",
+          "name": "slot3_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot3_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_name",
+          "name": "slot3_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot3_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot3_desc",
+          "name": "slot3_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot3_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_enable",
+          "name": "slot4_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot4_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_name",
+          "name": "slot4_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot4_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot4_desc",
+          "name": "slot4_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot4_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_enable",
+          "name": "slot5_enable",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "slot5_enable"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_name",
+          "name": "slot5_name",
+          "type": "STRING",
+          "widget": {
+            "name": "slot5_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slot5_desc",
+          "name": "slot5_desc",
+          "type": "STRING",
+          "widget": {
+            "name": "slot5_desc"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_save",
+          "name": "auto_save",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_save"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_dir",
+          "name": "save_dir",
+          "type": "STRING",
+          "widget": {
+            "name": "save_dir"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "基础定妆照",
+          "name": "基础定妆照",
+          "type": "IMAGE",
+          "links": [
+            6
+          ]
+        },
+        {
+          "localized_name": "造型1定妆照",
+          "name": "造型1定妆照",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "localized_name": "造型2定妆照",
+          "name": "造型2定妆照",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "localized_name": "造型3定妆照",
+          "name": "造型3定妆照",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "localized_name": "造型4定妆照",
+          "name": "造型4定妆照",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "localized_name": "造型5定妆照",
+          "name": "造型5定妆照",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WumuCharacterAtelier"
+      },
+      "widgets_values": [
+        "①+② 全流程",
+        "顾一苇",
+        "Realistic film-grade character reference photography. Chinese Han ethnicity woman, 22, round face, ponytail, petite, flight-attendant cap never quite straight, standing facing the camera squarely, full body visible head to toe, arms relaxed at sides with hands visible. Black ponytail with a crooked flight-cap crease, round face with soft cheeks, big watery eyes that widen when flustered, small straight nose, petal-soft lips, 22 years old with baby-fat cheeks and no wrinkles, petite 155cm slight build with nervous fidgeting hands Wearing plain simple underwear only, no clothing, no accessories, no jewelry. True skin texture with natural fine lines and visible pores, matte skin finish, no oily sheen, natural unretouched complexion. Seamless pure white studio background, nothing else in frame; soft top key light with gentle twin side fill and a subtle hair rim light, soft lighting ratio. 8K ultra-realistic, commercial portrait photography, 85mm f1.8 lens, subtle film grain, cinematic atmosphere, clean transparent image with rich detail. (avoid: over-smoothed waxy plastic skin, beauty-filter face, distorted facial features, deformed hands, twisted limbs, cartoon, anime, oil painting, illustration)",
+        "写实电影",
+        0.8,
+        "flux2_dev_fp8mixed.safetensors",
+        "mistral_3_small_flux2_bf16.safetensors",
+        "full_encoder_small_decoder.safetensors",
+        8,
+        4,
+        832,
+        1216,
+        3291267020,
+        "randomize",
+        true,
+        true,
+        "常服",
+        "Edit the reference photo: the SAME person with identical face, hairstyle, body shape and skin tone, now wearing a slim-fitting futuristic in-starship attendant uniform in the same suit design system, light-duty class tailored for her petite 155cm frame with soft rounded contours, NOT bulky and not military-looking: pearl-white smooth segmented armor panels over the torso and shoulders with pale blue-grey flexible fabric between segments, panels thinner and lighter than heavy-duty crew suits; glowing cyan piping tracing the collar, cuffs and armor seams with a subtle breathing pulse; a compact attendant service module on the chest (cabin comms and passenger info screen, no heavy buttons) with one small red indicator; no heavy backpack — only a pair of slim curved hip storage wings; an enlarged silver-white communication ear pod on her right ear (her signature gear, indicator gently blinking); a slim white metal neck ring; a fully transparent clear dome helmet with her round-faced features fully visible, thin white helmet frame, one small top lamp. Standing facing the camera, full body visible head to toe, arms relaxed at sides, her fingers naturally intertwined in a nervous habit. True skin texture with baby-fat cheeks, matte finish, no oily sheen. Seamless pure white studio background; soft top key light with gentle twin side fill and soft fill inside the transparent helmet. 8K ultra-realistic, commercial portrait photography, 85mm f1.8 lens, subtle film grain, cinematic atmosphere. (avoid: bulky silhouette, heavy military armor, over-smoothed waxy skin, exaggerated youthfulness, distorted facial features, deformed hands, twisted limbs, cartoon, anime, oil painting)",
+        false,
+        "造型2",
+        "",
+        false,
+        "造型3",
+        "",
+        false,
+        "造型4",
+        "",
+        false,
+        "造型5",
+        "",
+        true,
+        "F:\\AI\\MINIMAXH3",
+        "中文"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      1,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      1,
+      2,
+      10,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      1,
+      3,
+      10,
+      2,
+      "IMAGE"
+    ],
+    [
+      4,
+      1,
+      4,
+      10,
+      3,
+      "IMAGE"
+    ],
+    [
+      5,
+      1,
+      5,
+      10,
+      4,
+      "IMAGE"
+    ],
+    [
+      6,
+      1,
+      0,
+      21,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      10,
+      0,
+      22,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.0717944050000108,
+      "offset": [
+        654,
+        -133
+      ]
+    }
+  },
+  "version": 0.4
+}
