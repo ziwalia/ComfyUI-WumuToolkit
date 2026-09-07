@@ -1,6 +1,6 @@
 import { app } from "/scripts/app.js";
 
-const NODE_NAMES = ["WumuCharacterAtelier", "WumuTriptychAtelier"];
+const NODE_NAMES = ["WumuBaseAtelier", "WumuOutfitAtelier", "WumuCharacterAtelier", "WumuTriptychAtelier"];
 
 let uiLang = "中文";
 let pluginVersion = "";

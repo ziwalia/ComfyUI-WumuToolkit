@@ -54,13 +54,13 @@ git clone https://gitclone.com/github.com/ziwalia/ComfyUI-WumuToolkit
 ## 🚀 快速开始：一次队列出全套资产
 
 1. 打开 `人物资产全流程-定妆照+四联图.json`
-2. **左节点（定妆照工坊）**改三处：
+2. **①基础定妆照工坊（左）**改两处：
    - `角色名`：中文，用于文件命名
    - `人物英文描述`：只写身份特征，**不写服装**（写法见下方样板）
-   - 造型槽：要几套衣服就启用几个槽，填造型名 + 服装提示词
-3. **右节点（四联图工坊）**：`角色名` 与造型名和左边**保持一致**（仅用于命名）
-4. 点 Queue。FLUX.2 Dev 每造型约 1-2 分钟，Klein 每造型四链约半分钟
-5. 产物自动保存（默认 `F:\AI\MINIMAXH3\资产\角色\`，改 `save_dir` 参数即可）：
+3. **②服装造型定妆照工坊（中）**：`角色名` 与①同名；`人物英文描述` 留空（已连①的「身份核心」）；造型槽要几套衣服就启用几个，填造型名 + 服装提示词
+4. **四联图工坊（右）**：`角色名` 和造型名和②**保持一致**（仅用于命名）
+5. 点 Queue。FLUX.2 Dev 每造型约 1-2 分钟，Klein 每造型四链约半分钟
+6. 产物自动保存（默认 `F:\AI\MINIMAXH3\资产\角色\`，改 `save_dir` 参数即可）：
 
 ```
 资产/角色/
@@ -73,15 +73,9 @@ git clone https://gitclone.com/github.com/ziwalia/ComfyUI-WumuToolkit
 
 ---
 
-## 🏭 节点 A：定妆照工坊（WumuCharacterAtelier）
+## 🏭 节点 A1：基础定妆照工坊①（WumuBaseAtelier）
 
-**三种模式**：
-
-| 模式 | 行为 |
-|---|---|
-| `①+② 全流程` | 文生图出基础照（素体白棚）→ 参考图生图换装出各造型 |
-| `仅① 基础定妆照` | 只出基础照 |
-| `仅② 造型定妆照` | 用 `base_image` 输入口喂已有基础照直接换装 |
+出**基础定妆照**（白底内衣素体照，锁脸/发型/体型/肤色）+ **身份核心**字符串。链路：`基础定妆照` → ②的 `base_image` 与预览；`身份核心` → ②的 `identity`（连了就不用在②重复填人物描述）。
 
 ### 关键参数
 
@@ -91,13 +85,12 @@ git clone https://gitclone.com/github.com/ziwalia/ComfyUI-WumuToolkit
 | `style_name` / `style_strength` | 写实电影 / 0.8 | 风格下拉由 `styles.json` 驱动（9 种），写实类 0.6-0.8，风格化 0.85-1.0 |
 | `steps` / `guidance` | 20 / 4.0 | FLUX.2 标准；长提示词 guidance 可降 2-3 |
 | `width × height` | 832×1216 | 竖构图全身照标准，**不要改** |
-| `seed` | 随机 | 基础用 seed，造型 N 自动用 seed+N×10 |
+| `seed` | 随机 | 固定=可重复 |
 | `use_turbo` | 关 | 自动挂 Turbo LoRA（步数记得改 8），快 2.5 倍画质略降。测试期开，正式出片关 |
-| 造型槽 ×5 | 槽 1 启用 | 启用勾选 + 中文名 + 服装提示词（Kontext 句式，见下方样板） |
 
-### 🆕 v1.1 功能一：基础照图生图
+### 基础照图生图（v1.1 特性，保留在①）
 
-勾选 **`base_use_reference`** + 连接 **`base_reference_image`** 输入口（喂已有定妆照/素体照/真人参考照，自动缩放到出图尺寸），① 基础照即改为图生图。用 **`base_denoise`** 控制贴合度（ComfyUI 官方 KSampler 同款部分加噪公式）：
+勾选 **`base_use_reference`** + 连接 **`base_reference_image`** 输入口（喂已有定妆照/素体照/真人参考照，自动缩放到出图尺寸），基础照即改为图生图。用 **`base_denoise`** 控制贴合度（ComfyUI 官方 KSampler 同款部分加噪公式）：
 
 | denoise | 效果 | 适用 |
 |---|---|---|
@@ -105,14 +98,35 @@ git clone https://gitclone.com/github.com/ziwalia/ComfyUI-WumuToolkit
 | 0.7~0.8 | 保人物、改质感细节（**推荐**） | 修皮肤/光影/清晰度 |
 | 0.4~0.6 | 轻度修整 | 微调 |
 
-### 🆕 v1.1 功能二：外部基础照重抽造型 ⭐
+---
+
+## 🏭 节点 A2：服装造型定妆照工坊②（WumuOutfitAtelier）
+
+吃 `base_image`（**必连**：①的「基础定妆照」输出 或 LoadImage），ReferenceLatent 参考链换装出最多 5 套**服装造型定妆照**（Kontext 提示词，脸不变衣服换）。
+
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `base_image` | 必连 | ①的「基础定妆照」或 LoadImage 的任意基础照 |
+| `identity` | 选连 | ①的「身份核心」输出；不连则从下方 `desc_en` 提取 |
+| `desc_en` | 空 | 备用身份锚（连了 identity 就留空） |
+| 风格/模型/尺寸 | 同① | **与①保持一致**，保证基础照与造型照同风格同分辨率 |
+| `seed` | 随机 | **独立于①**；造型 N 自动用 seed+N×10 |
+| 造型槽 ×5 | 槽 1 启用 | 启用勾选 + 中文名 + 服装提示词（Kontext 句式，见下方样板） |
+
+### ⭐ 重抽造型（拆分的核心收益）
 
 **场景：全流程跑完，基础照满意、造型不满意 —— 不用重跑 ①。**
 
-1. 勾选 **`slot_use_external_base`**
-2. 加 `LoadImage` 加载已保存的 `角色名_基础定妆照.png`，连到 `base_image` 输入口
-3. 直接 Queue —— **跳过 ①（省 1-2 分钟）只重抽造型**；基础照输出口透传原图，下游四联图照常工作
-4. 不满意换种子再 Queue；满意后**取消勾选**恢复正常全流程
+1. 断开①→②的连线，加 `LoadImage` 加载已保存的 `角色名_基础定妆照.png`，连到②的 `base_image`
+2. （可选）断开 `identity` 连线，把身份描述填进②的 `desc_en`
+3. 直接 Queue —— **只重跑②+四联（省 1-2 分钟）**，基础照零消耗
+4. 不满意换②的种子再 Queue
+
+---
+
+### 旧版合并节点（WumuCharacterAtelier）
+
+①+② 合在一个节点里的旧形态（含 `mode` 模式下拉、`slot_use_external_base` 开关），**仅为已保存的旧工作流兼容保留**，新流程请用 ①→② 连线组合，功能完全等价。
 
 ---
 
@@ -203,6 +217,7 @@ body shape and skin tone, now wearing [服装总类与设计系统，1-2 句].
 
 ## 📋 版本历史
 
+- **v1.3.0**：定妆照工坊拆分为 **①基础定妆照工坊（WumuBaseAtelier）** + **②服装造型定妆照工坊（WumuOutfitAtelier）**——①输出「基础定妆照 + 身份核心」，②必连 `base_image`、选连 `identity`（免重复填人物描述）；重抽造型=换线不重跑①；②种子独立；公共逻辑抽 Mixin；旧合并节点保留注册兼容旧工作流
 - **v1.2.1**：控件行标题双语（中文模式「中文名 + 键名」，English 模式英文名，切换即时生效）；节点标题栏显示版本号（读自 `pyproject.toml`，`/wumu/lang` 返回 `version`）
 - **v1.2.0**：新增 `language` 中英文下拉（默认中文）——节点输出（落盘目录/文件后缀/四视角提示词/info/日志）按节点独立切换；参数提示双语化（`wumu_lang` 模块 + `/wumu/lang` API，切换后刷新页面生效）；合并 v1.1.0 的基础照图生图与外部基础照重抽造型
 - **v1.1.0**（定妆照工坊内部版本 v4）：新增 ① 基础照图生图（`base_use_reference` + `base_reference_image` + `base_denoise`）；② 外部基础照重抽造型（`slot_use_external_base`，跳过 ① 只重跑 ②，基础照输出口透传）；③ 工作流内嵌手册扩充提示词样板
