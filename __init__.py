@@ -32,6 +32,25 @@ except Exception as e:
 WEB_DIRECTORY = "./web"
 
 try:
+    from . import wumu_lang
+    from server import PromptServer
+    from aiohttp import web
+
+    @PromptServer.instance.routes.get("/wumu/lang")
+    async def wumu_get_lang(request):
+        return web.json_response({"lang": wumu_lang.get_lang(), "supported": wumu_lang.SUPPORTED})
+
+    @PromptServer.instance.routes.post("/wumu/lang")
+    async def wumu_set_lang(request):
+        try:
+            data = await request.json()
+        except Exception:
+            data = {}
+        return web.json_response({"lang": wumu_lang.set_lang(data.get("lang"))})
+except Exception as e:
+    print(f"[WumuToolkit] ⚠ 语言API注册失败: {e}")
+
+try:
     STYLE_FILE
 except NameError:
     STYLE_FILE = os.path.join(os.path.dirname(__file__), "styles.json")

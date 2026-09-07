@@ -43,6 +43,15 @@ wumu-movie 影视流水线专用 ComfyUI 节点集：**一个节点产出角色�
 
 16G 显存即可运行；两套模型由 ComfyUI 自动换入换出。
 
+## 语言 / Language
+
+两个工坊节点均有 `language` 下拉（默认 **中文**）：
+
+- **中文**：产物落盘 `资产\角色\`，文件名 `角色_造型_证件照/正面图/侧面图/背面图/四联图.png` —— wumu-movie 引擎 / 导演台 `角色名@造型名` 引用契约所需，**跑 wumu-movie 流水线请保持此档**
+- **English**：产物落盘 `assets\characters\`，文件名 `character_outfit_id/front/side/back/quadtych.png`，四视角生成提示词与 info/日志同步切英文 —— 供国际用户接入自有流水线
+
+参数提示（tooltip）语言为全局设置：在节点上切换 `language` 后自动保存，**刷新页面**后所有 Wumu 节点的参数提示切换语言（模式选项、风格名、输出端口名等数据项保持原文）。
+
 ## 安装
 
 **方式一：ComfyUI Manager（推荐）**

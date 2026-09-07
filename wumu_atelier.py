@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-"""节点A：Wumu 定妆照工坊（FLUX.2 Dev）v3
+"""节点A：Wumu 定妆照工坊（FLUX.2 Dev）v4
 FLUX.2 架构：128ch latent / 单Mistral编码器 / Flux2Scheduler / ReferenceLatent 图生图
-支持：Kontext 提示词原生兼容 / Turbo LoRA 8步加速 / boreal 写实风格
+支持：Kontext 提示词原生兼容 / Turbo LoRA 8步加速 / boreal 写实风格 / 中英文双语输出
+v4（2026-09-07）：
+  - 新增 language 下拉（默认中文）：切换本节点落盘目录/文件后缀/info/日志
+  - 参数提示（tooltip）双语：language 切换后自动保存全局设置，刷新页面生效
 """
 import os, json, glob
 import torch
@@ -16,6 +19,8 @@ import comfy.samplers
 from comfy.sd import CLIPType
 from comfy_extras.nodes_flux import get_schedule
 import folder_paths
+
+from .wumu_lang import L, asset_dir
 
 # ============================ 风格引擎 ============================
 STYLE_FILE = os.path.join(os.path.dirname(__file__), "styles.json")
@@ -87,37 +92,46 @@ class WumuCharacterAtelier:
             "required": {
                 "mode": (["①+② 全流程", "仅① 基础定妆照", "仅② 造型定妆照(需接基础图)"],
                          {"default": "①+② 全流程",
-                          "tooltip": "①+②=文生图出基础(穿内衣)→参考图生图出各造型\n仅①=只要基础定妆照\n仅②=用已有基础图直接换装"}),
+                          "tooltip": L("①+②=文生图出基础(穿内衣)→参考图生图出各造型\n仅①=只要基础定妆照\n仅②=用已有基础图直接换装",
+                                       "①+② = txt2img base (underwear) → reference-based outfit swap\n① only = base portrait only\n② only = swap outfits from a connected base image")}),
                 "char_name": ("STRING", {"default": "角色名",
-                    "tooltip": "角色中文名，用于文件命名"}),
+                    "tooltip": L("角色中文名，用于文件命名", "Character name, used for file naming")}),
                 "desc_en": ("STRING", {"default": "Chinese Han ethnicity man, 28 years old, lean build, short black hair slightly messy, tired eyes, a small mole at the end of his left eyebrow", "multiline": True,
-                    "tooltip": "人物英文描述（只写身份特征！）\n✅ 国籍人种/年龄体型/脸型发型/肤色/特殊标记\n❌ 任何服装（服装写在造型槽）\n⚠ 国籍写最前面防人种漂移"}),
+                    "tooltip": L("人物英文描述（只写身份特征！）\n✅ 国籍人种/年龄体型/脸型发型/肤色/特殊标记\n❌ 任何服装（服装写在造型槽）\n⚠ 国籍写最前面防人种漂移",
+                                 "Identity-only description (English)\n✅ ethnicity / age & build / face & hair / skin / distinctive marks\n❌ any clothing (clothing goes in outfit slots)\n⚠ put nationality first to avoid ethnicity drift")}),
                 "style_name": (style_names, {"default": style_names[0] if style_names else "真实实拍",
-                    "tooltip": "风格下拉一选即生效\nFLUX.2 LoRA 生态：写实电影(boreal)✅ / Turbo加速✅\n其他风格暂用提示词版"}),
+                    "tooltip": L("风格下拉一选即生效\nFLUX.2 LoRA 生态：写实电影(boreal)✅ / Turbo加速✅\n其他风格暂用提示词版",
+                                 "Style dropdown, applies instantly\nFLUX.2 LoRA ecosystem: cinematic (boreal)✅ / Turbo✅\nOther styles are prompt-based for now")}),
                 "style_strength": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 2.0, "step": 0.05,
-                    "tooltip": "LoRA 强度\n写实类 0.6-0.8\n风格化类 0.85-1.0"}),
+                    "tooltip": L("LoRA 强度\n写实类 0.6-0.8\n风格化类 0.85-1.0",
+                                 "LoRA strength\nrealistic styles 0.6-0.8\nstylized 0.85-1.0")}),
                 "unet_name": (unets, {"default": unets[0] if unets else "flux2_dev_fp8mixed.safetensors",
-                    "tooltip": "FLUX.2 Dev 底模（自动过滤 flux2）"}),
+                    "tooltip": L("FLUX.2 Dev 底模（自动过滤 flux2）", "FLUX.2 Dev base model (auto-filtered by 'flux2')")}),
                 "clip_name": (clips, {"default": clips[0] if clips else "mistral_3_small_flux2_bf16.safetensors",
-                    "tooltip": "FLUX.2 文本编码器（Mistral，单个非双编码器）"}),
+                    "tooltip": L("FLUX.2 文本编码器（Mistral，单个非双编码器）", "FLUX.2 text encoder (Mistral, single encoder)")}),
                 "vae_name": (vaes, {"default": vaes[0] if vaes else "full_encoder_small_decoder.safetensors",
-                    "tooltip": "FLUX.2 VAE（128 通道 latent）"}),
+                    "tooltip": L("FLUX.2 VAE（128 通道 latent）", "FLUX.2 VAE (128-channel latent)")}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 100,
-                    "tooltip": "采样步数\n20 = FLUX.2 标准值\n8 = Turbo 模式（勾 use_turbo 后步数手动改 8）"}),
+                    "tooltip": L("采样步数\n20 = FLUX.2 标准值\n8 = Turbo 模式（勾 use_turbo 后步数手动改 8）",
+                                 "Sampling steps\n20 = FLUX.2 standard\n8 = Turbo mode (set manually after enabling use_turbo)")}),
                 "guidance": ("FLOAT", {"default": 4.0, "min": 0.0, "max": 20.0, "step": 0.1,
-                    "tooltip": "FluxGuidance 值\n4.0 = FLUX.2 dev 甜点值"}),
+                    "tooltip": L("FluxGuidance 值\n4.0 = FLUX.2 dev 甜点值",
+                                 "FluxGuidance value\n4.0 = FLUX.2 dev sweet spot")}),
                 "width": ("INT", {"default": 832, "min": 256, "max": 2048, "step": 32,
-                    "tooltip": "图片宽度"}),
+                    "tooltip": L("图片宽度", "Image width")}),
                 "height": ("INT", {"default": 1216, "min": 256, "max": 2048, "step": 32,
-                    "tooltip": "图片高度（竖构图全身照标准 1216）"}),
+                    "tooltip": L("图片高度（竖构图全身照标准 1216）", "Image height (1216 = standard vertical full-body)")}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2**32 - 1,
-                    "tooltip": "随机种子\n固定=可重复\n基础用 seed，造型1用 seed+10…"}),
+                    "tooltip": L("随机种子\n固定=可重复\n基础用 seed，造型1用 seed+10…",
+                                 "Seed\nfixed = reproducible\nbase uses seed, outfit1 uses seed+10…")}),
                 "use_turbo": ("BOOLEAN", {"default": False,
-                    "tooltip": "勾选=自动挂载 Flux_2-Turbo-LoRA\n步数从 20 降到 8（速度提升 2.5 倍）\n画质略降，测试阶段推荐开启"}),
-                "slot1_enable": ("BOOLEAN", {"default": True, "tooltip": "勾选=启用"}),
-                "slot1_name": ("STRING", {"default": "常服", "tooltip": "造型中文名(用于文件命名)"}),
+                    "tooltip": L("勾选=自动挂载 Flux_2-Turbo-LoRA\n步数从 20 降到 8（速度提升 2.5 倍）\n画质略降，测试阶段推荐开启",
+                                 "Check = auto-attach Flux_2-Turbo-LoRA\nsteps 20→8 (2.5× faster)\nslight quality drop — recommended while testing")}),
+                "slot1_enable": ("BOOLEAN", {"default": True, "tooltip": L("勾选=启用", "Check = enable")}),
+                "slot1_name": ("STRING", {"default": "常服", "tooltip": L("造型中文名(用于文件命名)", "Outfit name (used in file naming)")}),
                 "slot1_desc": ("STRING", {"default": outfit_default, "multiline": True,
-                    "tooltip": "FLUX.2 原生支持 Kontext 提示词！\n'Edit the reference photo: the SAME person...now wearing [服装]'\nFLUX.2 能理解参考图锚定，脸不会变"}),
+                    "tooltip": L("FLUX.2 原生支持 Kontext 提示词！\n'Edit the reference photo: the SAME person...now wearing [服装]'\nFLUX.2 能理解参考图锚定，脸不会变",
+                                 "FLUX.2 natively supports Kontext prompts!\n'Edit the reference photo: the SAME person...now wearing [clothing]'\nFLUX.2 anchors on the reference image — the face stays consistent")}),
                 "slot2_enable": ("BOOLEAN", {"default": False}),
                 "slot2_name": ("STRING", {"default": "造型2"}),
                 "slot2_desc": ("STRING", {"default": "", "multiline": True}),
@@ -132,10 +146,14 @@ class WumuCharacterAtelier:
                 "slot5_desc": ("STRING", {"default": "", "multiline": True}),
                 "auto_save": ("BOOLEAN", {"default": True}),
                 "save_dir": ("STRING", {"default": r"F:\AI\MINIMAXH3"}),
+                "language": (["中文", "English"], {"default": "中文",
+                    "tooltip": L("输出语言（本节点）：落盘目录/文件后缀/info/日志\n中文→资产\\角色\\角色_造型_定妆照.png；English→assets\\characters\\character_outfit_outfit.png\n参数提示语言为全局设置：切换后刷新页面生效",
+                                 "Output language (this node): save folders / file suffixes / info / logs\n中文 → 资产\\角色\\角色_造型_定妆照.png; English → assets\\characters\\character_outfit_outfit.png\nTooltip language is global: switch here, then refresh the page")}),
             },
             "optional": {
                 "base_image": ("IMAGE",
-                    {"tooltip": "基础定妆照输入口（仅模式②时必须连接）"}),
+                    {"tooltip": L("基础定妆照输入口（仅模式②时必须连接）",
+                                  "Base portrait input (required in mode ② only)")}),
             },
         }
 
@@ -143,7 +161,7 @@ class WumuCharacterAtelier:
     RETURN_NAMES = ("基础定妆照", "造型1定妆照", "造型2定妆照", "造型3定妆照", "造型4定妆照", "造型5定妆照", "info")
     FUNCTION = "run"
     CATEGORY = "wumu"
-    DESCRIPTION = "Wumu 定妆照工坊（FLUX.2 Dev）：ReferenceLatent 参考链换装，Kontext 提示词原生支持，脸不变衣服换"
+    DESCRIPTION = "Wumu 定妆照工坊（FLUX.2 Dev）：ReferenceLatent 参考链换装，Kontext 提示词原生支持，脸不变衣服换 / Character portrait atelier: ReferenceLatent outfit swap with consistent face"
 
     def _load_models(self, unet_name, clip_name, vae_name):
         unet_path = folder_paths.get_full_path("diffusion_models", unet_name)
@@ -266,19 +284,29 @@ class WumuCharacterAtelier:
             slot3_enable, slot3_name, slot3_desc,
             slot4_enable, slot4_name, slot4_desc,
             slot5_enable, slot5_name, slot5_desc,
-            auto_save, save_dir, base_image=None, **kwargs):
-        print(f"[Wumu工坊] 🚀 模式={mode} 角色={char_name} 风格={style_name} Turbo={'开' if use_turbo else '关'}")
+            auto_save, save_dir, language="中文", base_image=None, **kwargs):
+        zh = language == "中文"
+        def msg(zh_s, en_s):
+            return zh_s if zh else en_s
+
+        print(f"[Wumu工坊] 🚀 " + msg(
+            f"模式={mode} 角色={char_name} 风格={style_name} Turbo={'开' if use_turbo else '关'}",
+            f"mode={mode} character={char_name} style={style_name} turbo={'on' if use_turbo else 'off'}"))
 
         model, clip, vae = self._load_models(unet_name, clip_name, vae_name)
         model, clip, style_en = self._apply_style(model, clip, style_name, style_strength)
         if use_turbo:
             model, clip = self._apply_turbo(model, clip)
 
+        out_dir = asset_dir(save_dir, language)
+        suffix_base = msg("基础定妆照", "base")
+        suffix_outfit = msg("定妆照", "outfit")
+
         # 基础定妆照
         base_img = None
         if mode == "仅② 造型定妆照(需接基础图)":
             if base_image is None:
-                raise RuntimeError("[Wumu工坊] ❌ 模式②需要连接基础图输入（base_image）")
+                raise RuntimeError("[Wumu工坊] ❌ 模式②需要连接基础图输入（base_image）/ mode ② requires base_image input")
             base_img = base_image
         else:
             # desc_en 已含完整模板（粘贴引擎输出）→ 原样使用；只写身份特征 → 套标准模板
@@ -294,11 +322,12 @@ class WumuCharacterAtelier:
                     f"soft even frontal studio lighting, photorealistic, sharp focus. "
                     f"no text, no watermark, no logo."
                 )
-            print(f"[Wumu工坊] ① 文生图基础定妆照 ({width}×{height}, {steps}步)")
+            print(msg(f"[Wumu工坊] ① 文生图基础定妆照 ({width}×{height}, {steps}步)",
+                      f"[Wumu工坊] ① txt2img base portrait ({width}×{height}, {steps} steps)"))
             base_img = self._sample_flux2(model, clip, base_prompt, guidance, width, height,
                                           steps, seed, vae, ref_latent=None, style_en=style_en)
             if auto_save:
-                p = os.path.join(save_dir, "资产", "角色", f"{char_name}_基础定妆照.png")
+                p = os.path.join(out_dir, f"{char_name}_{suffix_base}.png")
                 save_img(base_img, p)
 
         # 造型定妆照（FLUX.2 ReferenceLatent 参考链）
@@ -313,7 +342,8 @@ class WumuCharacterAtelier:
             slots = []
         else:
             active = [s for s in slots if s[0] and s[2].strip()]
-            print(f"[Wumu工坊] ② 参考图生图 ×{len(active)}（ReferenceLatent，脸不变）")
+            print(msg(f"[Wumu工坊] ② 参考图生图 ×{len(active)}（ReferenceLatent，脸不变）",
+                      f"[Wumu工坊] ② reference img2img ×{len(active)} (ReferenceLatent, face locked)"))
 
         ref_latent = None
         if base_img is not None:
@@ -336,7 +366,7 @@ class WumuCharacterAtelier:
             img = self._sample_flux2(model, clip, full_prompt, guidance, width, height,
                                     steps, slot_seed, vae, ref_latent=ref_latent, style_en=style_en)
             if auto_save:
-                p = os.path.join(save_dir, "资产", "角色", f"{char_name}_{name}_定妆照.png")
+                p = os.path.join(out_dir, f"{char_name}_{name}_{suffix_outfit}.png")
                 save_img(img, p)
             results.append(img)
 
@@ -345,7 +375,9 @@ class WumuCharacterAtelier:
         while len(out_slots) < 5:
             out_slots.append(blank)
 
-        info = f"角色={char_name} | 风格={style_name} | Turbo={'✓' if use_turbo else '✗'} | 基础✓ | 造型={sum(1 for s in slots if s[0] and s[2].strip())}张"
+        n_outfits = sum(1 for s in slots if s[0] and s[2].strip())
+        info = msg(f"角色={char_name} | 风格={style_name} | Turbo={'✓' if use_turbo else '✗'} | 基础✓ | 造型={n_outfits}张",
+                   f"character={char_name} | style={style_name} | turbo={'Y' if use_turbo else 'N'} | base=done | outfits={n_outfits}")
         return (base_img, out_slots[0], out_slots[1], out_slots[2], out_slots[3], out_slots[4], info)
 
 NODE_CLASS_MAPPINGS_ATelier = {"WumuCharacterAtelier": WumuCharacterAtelier}
