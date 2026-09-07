@@ -1,0 +1,1 @@
+# 无额外依赖：torch / numpy / Pillow / aiohttp 均为 ComfyUI 自带环境组件

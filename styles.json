@@ -1,0 +1,83 @@
+[
+  {
+    "name": "写实电影",
+    "lora": "flux.2写实电影boreal-flux-dev2-ComfyUI.safetensors",
+    "strength": 0.8,
+    "prompt_en": "cinematic film look, natural lighting, film grain",
+    "prompt_zh": "写实电影质感",
+    "hf_url": "",
+    "note": "你已有此文件 ✓ FLUX.2 dev 专用"
+  },
+  {
+    "name": "真实实拍",
+    "lora": null,
+    "strength": 0.0,
+    "prompt_en": "photorealistic, natural skin texture, realistic photography",
+    "prompt_zh": "真实实拍质感，自然皮肤纹理",
+    "hf_url": "",
+    "note": "纯提示词风格，零下载"
+  },
+  {
+    "name": "写实增强",
+    "lora": "flux1-add-details.safetensors",
+    "strength": 0.7,
+    "prompt_en": "ultra detailed, natural skin pores, photorealistic",
+    "prompt_zh": "写实增强（细节LoRA）",
+    "hf_url": "https://hf-mirror.com/Shakker-Labs/FLUX.1-dev-LoRA-add-details/tree/main",
+    "note": "下载 flux1-dev-lora-add-details 的 .safetensors 文件，改名或保持原名放入 loras/"
+  },
+  {
+    "name": "写实摄影",
+    "lora": "flux-RealismLora.safetensors",
+    "strength": 0.85,
+    "prompt_en": "photorealistic, professional photography, sharp focus",
+    "prompt_zh": "写实摄影风",
+    "hf_url": "https://hf-mirror.com/XLabs-AI/flux-RealismLora/tree/main",
+    "note": "XLabs 官方写实LoRA。仓库里文件名叫 lora.safetensors(22MB)，下载后改名为 flux-RealismLora.safetensors 放入loras/"
+  },
+  {
+    "name": "动画",
+    "lora": "flux-anime-style-v2.safetensors",
+    "strength": 0.85,
+    "prompt_en": "anime style, clean line art, cel shading",
+    "prompt_zh": "动画风",
+    "hf_url": "https://hf-mirror.com/minpeter/LoRA-FLUX-anime-style-v2/tree/main",
+    "note": "日式动画风格"
+  },
+  {
+    "name": "像素",
+    "lora": "pixel_art_style.safetensors",
+    "strength": 0.9,
+    "prompt_en": "pixel art style, retro game aesthetic",
+    "prompt_zh": "像素风",
+    "hf_url": "",
+    "note": "你已有此文件 ✓"
+  },
+  {
+    "name": "3D动画",
+    "lora": null,
+    "strength": 0.0,
+    "prompt_en": "3D render, Pixar style, soft global illumination, subsurface scattering, smooth shading",
+    "prompt_zh": "3D 动画风（提示词版，找到LoRA后可替换）",
+    "hf_url": "",
+    "note": "暂用提示词，找到好LoRA后编辑此条"
+  },
+  {
+    "name": "水墨",
+    "lora": "flux-ink-painting.safetensors",
+    "strength": 0.8,
+    "prompt_en": "traditional Chinese ink painting, sumi-e, brush strokes, monochrome",
+    "prompt_zh": "水墨/国画风",
+    "hf_url": "https://civitai.com/models/913887/chinese-scene-ink-painting-style",
+    "note": "Civitai需注册；也可在 liblib.art 搜「FLUX 水墨」"
+  },
+  {
+    "name": "油画",
+    "lora": "flux-oil-painting.safetensors",
+    "strength": 0.8,
+    "prompt_en": "oil painting, thick brush strokes, impressionist, canvas texture",
+    "prompt_zh": "油画风",
+    "hf_url": "https://hf-mirror.com/dtthanh/flux_oil_painting_lora/tree/main",
+    "note": "HF直连"
+  }
+]
